@@ -19,7 +19,7 @@ class TimedDirectoryCleanup:
 
         delete = islice(self._matching_files(), self.backup_count, None)
         for entry in delete:
-            shutil.rmtree(entry)
+            os.remove(entry)
 
     def _matching_files(self):
         """

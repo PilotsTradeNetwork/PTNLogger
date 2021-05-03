@@ -8,11 +8,24 @@ from .formatters.PTNConsoleFormatter import PTNConsoleFormatter
 from .handlers.TimedPatternFileHandler import TimedPatternFileHandler
 
 
+class PTNLoggerException(Exception):
+    pass
+
+
 def get_logger(name):
+    """
+    Gets the logger with the associated name if it already exists. If the logger was not created before it will raise an
+    exception.
+
+    :param str name: The logger name
+    :returns: The logger object
+    :rtype: logging.Logger
+    :raises PTNLoggerException: If the logger does not exist
+    """
     logger = logging.getLogger(name)
     if len(logger.handlers) == 0:
         # No handlers attached, means the logger was not created before, means you done goofed up.
-        raise EnvironmentError('You should call create_logger first to configure your log handlers.')
+        raise PTNLoggerException('You should call create_logger first to configure your log handlers.')
     return logger
 
 
@@ -56,19 +69,19 @@ def directory_cleanup(directory_list, backup_count=5):
         TimedDirectoryCleanup(directory=directory, backup_count=backup_count).cleanup()
 
 
-def create_logger(name, log_directory=None, loglevel=logging.DEBUG, backup_count=50):
+def create_logger(name, log_directory=None, log_level=logging.DEBUG, backup_count=50):
     """
     Creates a logger with a console and rotating file handler attached to it.
 
     :param str name: The logger name
     :param str log_directory: The log directory to use, if None will use the current working directory + Logs
-    :param logging.level loglevel: The default log level to set. Defaults to logging.DEBUG
+    :param logging.level log_level: The default log level to set. Defaults to logging.DEBUG
     :param int backup_count: How many files to keep, defaults to 50
     """
     # Gets a logger that has a console and rotating file logger attached to it
 
     logger = logging.getLogger(name)
-    logger.setLevel(loglevel)
+    logger.setLevel(log_level)
 
     # Do we want to propagate log messages, maybe not?
     logger.propagate = False
@@ -76,7 +89,7 @@ def create_logger(name, log_directory=None, loglevel=logging.DEBUG, backup_count
     # Go add a console handler to the logger
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(PTNConsoleFormatter())
-    handler.setLevel(loglevel)
+    handler.setLevel(log_level)
 
     if not _check_handler_exists(handler, logger):
         logger.addHandler(handler)
@@ -96,8 +109,8 @@ def create_logger(name, log_directory=None, loglevel=logging.DEBUG, backup_count
         backup_count=backup_count
     )
     rotating_file_handler.setFormatter(PTNCommonFormatter())
-    rotating_file_handler.setLevel(loglevel)
-    handler.setLevel(loglevel)
+    rotating_file_handler.setLevel(log_level)
+    handler.setLevel(log_level)
 
     if not _check_handler_exists(rotating_file_handler, logger):
         logger.addHandler(rotating_file_handler)
